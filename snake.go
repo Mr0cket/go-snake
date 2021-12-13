@@ -26,7 +26,6 @@ type GameState struct {
 	Score int
 }
 
-
 // Entry point of the game
 func main() {
 	switch os.Args[1] {
@@ -58,7 +57,7 @@ func startGame() {
 	// Initialise the frame ticker
 	var tick bool
 	ticker := time.Tick(time.Second / 10)
-	
+
 	// The game loop
 	for gameOn {
 		render(windowSize, &gameState)
@@ -67,26 +66,26 @@ func startGame() {
 		// Wait for the next tick
 		for !tick {
 			select {
-				case direction := <- key:
-					// Only update the direction if the key is a valid direction
-					if utils.IsValidDirection(direction, gameState.direction) {
-						gameState.direction = direction
-					}
-				case <- ticker:
-					tick = true
+			case direction := <-key:
+				// Only update the direction if the key is a valid direction
+				if utils.IsValidDirection(direction, gameState.direction) {
+					gameState.direction = direction
+				}
+			case <-ticker:
+				tick = true
 			}
 		}
 
 		gameOn, reason = updateGameState(windowSize, &gameState)
-		}
-		utils.ExitGame(reason)
+	}
+	utils.ExitGame(reason)
 }
 
 // Initialise game state
 func newGameState(windowSize utils.WindowDimensions) GameState {
 	snakeHead := Position{X: windowSize.Cols / 2, Y: windowSize.Rows / 2}
-	Snake := Snake{snakeHead,{X: snakeHead.X - 1, Y: snakeHead.Y}, {X: snakeHead.X - 2, Y: snakeHead.Y}}
-	
+	Snake := Snake{snakeHead, {X: snakeHead.X - 1, Y: snakeHead.Y}, {X: snakeHead.X - 2, Y: snakeHead.Y}}
+
 	Food := getFoodPosition(windowSize, Snake)
 
 	return GameState{Snake: Snake, Food: Food, direction: "right", Score: 0}
@@ -98,19 +97,22 @@ func updateGameState(windowSize utils.WindowDimensions, gameState *GameState) (b
 	snakeBody := gameState.Snake[:]
 	snakeHead := snakeBody[0]
 	switch gameState.direction {
-		case "up": snakeHead.Y--
-		case "down": snakeHead.Y++
-		case "left": snakeHead.X--
-		case "right": snakeHead.X++
+	case "up":
+		snakeHead.Y--
+	case "down":
+		snakeHead.Y++
+	case "left":
+		snakeHead.X--
+	case "right":
+		snakeHead.X++
 	}
 	// create a new array to append the head to the front of the array
-	gameState.Snake = append([]Position{snakeHead}, snakeBody[:len(snakeBody) - 1]...)
-
+	gameState.Snake = append([]Position{snakeHead}, snakeBody[:len(snakeBody)-1]...)
 
 	/* Game Rules */
 
 	// Snake - Boundary Collision (game over)
-	if snakeHead.X < 1 || snakeHead.X > windowSize.Cols - 1 || snakeHead.Y < 1 || snakeHead.Y > windowSize.Rows - 1 {
+	if snakeHead.X < 1 || snakeHead.X > windowSize.Cols-1 || snakeHead.Y < 1 || snakeHead.Y > windowSize.Rows-1 {
 		return false, "You hit a wall"
 	}
 
@@ -119,7 +121,7 @@ func updateGameState(windowSize utils.WindowDimensions, gameState *GameState) (b
 		gameState.Score++
 		// Update the food position
 		gameState.Food = getFoodPosition(utils.GetWindowSize(), gameState.Snake)
-		gameState.Snake = append(gameState.Snake, snakeBody[len(snakeBody) - 1])
+		gameState.Snake = append(gameState.Snake, snakeBody[len(snakeBody)-1])
 	}
 
 	// Snake - Self Collision (game over)
@@ -137,7 +139,7 @@ func render(winSize utils.WindowDimensions, gameState *GameState) {
 	Food := gameState.Food
 	// Clear the screen
 	fmt.Print(utils.CSI + "2J")
-	
+
 	renderBorder(winSize)
 	renderSnake(gameState.Snake)
 
@@ -146,21 +148,22 @@ func render(winSize utils.WindowDimensions, gameState *GameState) {
 
 	// Render the score
 	utils.SetPosition(fmt.Sprintf("Score: %d", gameState.Score), 1, 1)
-}	
+}
 
 func renderBorder(winSize utils.WindowDimensions) {
-		// Render the top border
-		topBorder := "┌" + strings.Repeat("─", winSize.Cols - 2) + "┐"
-		utils.SetPosition(topBorder, 1, 1)
-	
-		// Render Side borders
-		for i := 0; i < winSize.Rows-2; i++ {
-			utils.SetPosition( "│", 1, i+2)
-			utils.SetPosition("│", winSize.Cols, i+2)
-		}
-		// Render the bottom border
-		bottomBorder := "└" + strings.Repeat("─", winSize.Cols - 2) + "┘"
-		utils.SetPosition(bottomBorder, 1, winSize.Rows)
+	// Render the top border
+	topBorder := "┌" + strings.Repeat("─", winSize.Cols-2) + "┐"
+	utils.SetPosition(topBorder, 1, 1)
+
+	// Render Side borders
+	for i := 0; i < winSize.Rows-2; i++ {
+		utils.SetPosition("│", 1, i+2)
+		utils.SetPosition("│", winSize.Cols, i+2)
+	}
+
+	// Render the bottom border
+	bottomBorder := "└" + strings.Repeat("─", winSize.Cols-2) + "┘"
+	utils.SetPosition(bottomBorder, 1, winSize.Rows)
 }
 
 func renderSnake(snake Snake) {
@@ -176,8 +179,8 @@ func renderSnake(snake Snake) {
 // TODO: avoid food spawning on the snake
 func getFoodPosition(winSize utils.WindowDimensions, snake Snake) Position {
 	rand.Seed(time.Now().UnixNano())
-	foodPosX := rand.Intn(winSize.Cols - 2) + 1
-	foodPosY := rand.Intn(winSize.Rows - 2) + 1
+	foodPosX := rand.Intn(winSize.Cols-2) + 1
+	foodPosY := rand.Intn(winSize.Rows-2) + 1
 
 	// Check if the food is on the snake
 	for _, segment := range snake {
@@ -186,5 +189,5 @@ func getFoodPosition(winSize utils.WindowDimensions, snake Snake) Position {
 		}
 	}
 
-	return Position{ X: foodPosX, Y: foodPosY }
+	return Position{X: foodPosX, Y: foodPosY}
 }
