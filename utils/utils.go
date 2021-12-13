@@ -27,9 +27,7 @@ func GetWindowSize() WindowDimensions {
 	outputFileDesc := int(os.Stdout.Fd())
 
 	winSize, err := unix.IoctlGetWinsize(outputFileDesc, unix.TIOCGWINSZ)
-	if err != nil {
-		panic(err)
-	}
+	Must(err)
 	
 	return WindowDimensions{int(winSize.Row), int(winSize.Col)}
 }
@@ -41,9 +39,8 @@ func GetChar() (charString string, err error) {
 	bytes := make([]byte, 3)
 
 	numRead, err := t.Read(bytes)
-	if err != nil {
-		return
-	}
+	Must(err)
+
 	if (numRead == 1) {
 		switch bytes[0] {
 		case 3:
@@ -59,9 +56,8 @@ func GetChar() (charString string, err error) {
 						case 66: // Down
 							charString = "down"
 						case 67: // Right
-						// Right
 						charString = "right"
-						case 68:
+						case 68: // Left
 							charString = "left"
 						default: // Ignore any other keypresses
 			}
@@ -74,22 +70,47 @@ func GetChar() (charString string, err error) {
 func ListenForKeyPress(key chan string) {
 	for {
 		keycode, err := GetChar()
-		if err != nil {
-			panic(err)
-		}
+		Must(err)
+		
 		switch keycode {
 			case "ctrl+c": // Escape
 				fmt.Print("\033[?25h")
-				os.Exit(0)
-			case "up":
-				key <- keycode
-			case "down":
-				key <- keycode
-			case "left":
-				key <- keycode
-			case "right":
+				ExitGame("Game exited")
+
+			// Send the direction to the channel
+			case "up", "down", "left", "right":
 				key <- keycode
 			default:
 		}
 	}
+}
+
+func ExitGame(reason string) {
+	fmt.Println(reason)
+
+	// Restore pointer
+	fmt.Print("\033[?25h")
+
+	// Exit the process
+	os.Exit(0)
+}
+
+func IsValidDirection(newDirection, currentDirection string) bool {
+	switch newDirection {
+		case "up":
+			return currentDirection != "down"
+		case "down":
+			return currentDirection != "up"
+		case "left":
+			return currentDirection != "right"
+		case "right":
+			return currentDirection != "left"
+		default:
+			return false
+	}
+
+}
+// Sets the position of a string on the screen
+func SetPosition(str string, xPos, yPos int) {
+	fmt.Printf(CSI + "%d;%dH%s", yPos, xPos, str)
 }
