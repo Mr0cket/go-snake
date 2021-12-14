@@ -10,6 +10,10 @@ import (
 
 const CSI = "\033["
 
+type Position struct {
+	X, Y int
+}
+
 type WindowDimensions struct {
 	Rows, Cols int
 }
@@ -91,21 +95,6 @@ func ExitGame(reason string) {
 
 	// Exit the process
 	os.Exit(0)
-}
-
-func IsValidDirection(newDirection, currentDirection string) bool {
-	switch newDirection {
-	case "up":
-		return currentDirection != "down"
-	case "down":
-		return currentDirection != "up"
-	case "left":
-		return currentDirection != "right"
-	case "right":
-		return currentDirection != "left"
-	default:
-		return false
-	}
 }
 
 // Sets the position of a string on the screen
