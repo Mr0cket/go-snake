@@ -8,18 +8,18 @@ type Snake struct {
 	body []utils.Position
 }
 
-func (Snake) New(windowSize utils.WindowDimensions) Snake {
+func NewSnake(windowSize utils.WindowDimensions) *Snake {
 	head := utils.Position{X: windowSize.Cols / 2, Y: windowSize.Rows / 2}
 
 	// Add the new head to the snake
-	return Snake{body:[]utils.Position{ head, {X: head.X - 1, Y: head.Y}, {X: head.X - 2, Y: head.Y}}}
+	return &Snake{body: []utils.Position{head, {X: head.X - 1, Y: head.Y}, {X: head.X - 2, Y: head.Y}}}
 }
 
-func (s Snake) Add(utils.Position) {
-	s.body[len(s.body)] = s.body[len(s.body)-1]
+func (s *Snake) Append(pos utils.Position) {
+	s.body = append(s.body, pos)
 }
 
-func (s Snake) Move(direction string) {
+func (s *Snake) Move(direction string) {
 	// Update the snake's position
 	snakeHead := s.body[0]
 
@@ -33,10 +33,9 @@ func (s Snake) Move(direction string) {
 	case "right":
 		snakeHead.X++
 	}
-	for i := len(s.body) - 1; i > 0; i-- {
-	s.body[i] = s.body[i-1]
-	}
-	s.body[0] = snakeHead
+	// Add the new head to the snake
+	s.body = append([]utils.Position{snakeHead}, s.body[:len(s.body)-1]...)
+
 }
 
 func (s Snake) Render() {

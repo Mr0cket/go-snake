@@ -26,7 +26,7 @@ func startGame() {
 	fmt.Print("\033[?25l")
 	// Get dimensions of the terminal window
 	windowSize := utils.GetWindowSize()
-	gameState := models.GameState.New(models.GameState{}, windowSize)
+	gameState := models.NewGame(windowSize)
 
 	key := make(chan string)
 	go utils.ListenForKeyPress(key)
@@ -35,25 +35,25 @@ func startGame() {
 	var gameOn = true
 
 	// Initialise the frame ticker
-	var tick bool
-	ticker := time.Tick(time.Second * 4)
+	var nextFrame bool
+	var interval = time.Millisecond * 100
 
 	// The game loop
 	// While the game is not over:
 	for gameOn {
 		gameState.Render(windowSize)
-		tick = false
+		nextFrame = false
 
 		// Get input while waiting for the next frame
-		for !tick {
+		for !nextFrame {
 			select {
 			case newInput := <-key:
 				// Only update the direction if the key is valid with respect to current direction
 				if gameState.IsValidDirection(newInput) {
-					gameState.Direction = newInput
+					gameState.NewDirection = newInput
 				}
-			case <-ticker:
-				tick = true
+			case <-time.After(interval):
+				nextFrame = true
 			}
 		}
 

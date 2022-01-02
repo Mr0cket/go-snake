@@ -12,7 +12,8 @@ type GameState struct {
 	// The snake's body
 	Snake Snake
 	// Direction of the snake
-	Direction string
+	Direction    string
+	NewDirection string
 	// The food's state
 	Food utils.Position
 	// The amount of food the snake has eaten
@@ -20,20 +21,21 @@ type GameState struct {
 }
 
 // Initialise game state
-func (g GameState) New(windowSize utils.WindowDimensions) GameState {
-	Snake := Snake.New(Snake{}, windowSize)
+func NewGame(windowSize utils.WindowDimensions) *GameState {
+	Snake := NewSnake(windowSize)
 
-	g = GameState{Snake: Snake, Direction: "right", Score: 0}
-	g.Food = g.newFood(windowSize)
-	return g
+	g := GameState{Snake: *Snake, Direction: "right", NewDirection: "right", Score: 0}
+	g.newFood(windowSize)
+	return &g
 }
 
 // Update the game state
-func (g GameState) Update(windowSize utils.WindowDimensions) (bool, string) {
+func (g *GameState) Update(windowSize utils.WindowDimensions) (bool, string) {
+	g.Direction = g.NewDirection
 	oldSnake := g.Snake.body
 	g.Snake.Move(g.Direction)
 
-	/* Game Rules */
+	/* Check Game Rules */
 	// Snake - Boundary Collision (game over)
 	if g.Snake.HitWall(windowSize) {
 		return false, "You hit a wall"
@@ -43,8 +45,8 @@ func (g GameState) Update(windowSize utils.WindowDimensions) (bool, string) {
 	if g.Snake.HitPoint(g.Food) {
 		g.Score++
 		// Update the food position
-		g.Food = g.newFood(windowSize)
-		g.Snake.Add(oldSnake[len(oldSnake)-1])
+		g.newFood(windowSize)
+		g.Snake.Append(oldSnake[len(oldSnake)-1])
 	}
 
 	// Snake - Self Collision (game over)
@@ -57,7 +59,7 @@ func (g GameState) Update(windowSize utils.WindowDimensions) (bool, string) {
 }
 
 // Create a random position for the food within the game window
-func (g GameState) newFood(winSize utils.WindowDimensions) utils.Position {
+func (g *GameState) newFood(winSize utils.WindowDimensions) {
 	rand.Seed(time.Now().UnixNano())
 	foodPosX := rand.Intn(winSize.Cols-2) + 1
 	foodPosY := rand.Intn(winSize.Rows-2) + 1
@@ -65,11 +67,12 @@ func (g GameState) newFood(winSize utils.WindowDimensions) utils.Position {
 	// Check if the food is on the snake
 	for _, segment := range g.Snake.body {
 		if foodPosX == segment.X && foodPosY == segment.Y {
-			return g.newFood(winSize)
+			g.newFood(winSize)
+			return
 		}
 	}
 
-	return utils.Position{X: foodPosX, Y: foodPosY}
+	g.Food = utils.Position{X: foodPosX, Y: foodPosY}
 }
 
 // Renders all the elements of the game
