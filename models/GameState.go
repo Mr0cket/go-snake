@@ -20,17 +20,22 @@ type GameState struct {
 	Score int
 }
 
+// Get dimensions of the terminal window
+var windowSize = utils.GetWindowSize()
+
 // Initialise game state
-func NewGame(windowSize utils.WindowDimensions) *GameState {
-	Snake := NewSnake(windowSize)
+func NewGame() *GameState {
+	// Get dimensions of the terminal window
+
+	Snake := NewSnake()
 
 	g := GameState{Snake: *Snake, Direction: "right", NewDirection: "right", Score: 0}
-	g.newFood(windowSize)
+	g.newFood()
 	return &g
 }
 
 // Update the game state
-func (g *GameState) Update(windowSize utils.WindowDimensions) (bool, string) {
+func (g *GameState) Update() (bool, string) {
 	g.Direction = g.NewDirection
 	oldSnake := g.Snake.body
 	g.Snake.Move(g.Direction)
@@ -45,7 +50,7 @@ func (g *GameState) Update(windowSize utils.WindowDimensions) (bool, string) {
 	if g.Snake.HitPoint(g.Food) {
 		g.Score++
 		// Update the food position
-		g.newFood(windowSize)
+		g.newFood()
 		g.Snake.Append(oldSnake[len(oldSnake)-1])
 	}
 
@@ -59,15 +64,15 @@ func (g *GameState) Update(windowSize utils.WindowDimensions) (bool, string) {
 }
 
 // Create a random position for the food within the game window
-func (g *GameState) newFood(winSize utils.WindowDimensions) {
+func (g *GameState) newFood() {
 	rand.Seed(time.Now().UnixNano())
-	foodPosX := rand.Intn(winSize.Cols-2) + 1
-	foodPosY := rand.Intn(winSize.Rows-2) + 1
+	foodPosX := rand.Intn(windowSize.Cols-2) + 1
+	foodPosY := rand.Intn(windowSize.Rows-2) + 1
 
 	// Check if the food is on the snake
 	for _, segment := range g.Snake.body {
 		if foodPosX == segment.X && foodPosY == segment.Y {
-			g.newFood(winSize)
+			g.newFood()
 			return
 		}
 	}
@@ -76,12 +81,12 @@ func (g *GameState) newFood(winSize utils.WindowDimensions) {
 }
 
 // Renders all the elements of the game
-func (g GameState) Render(winSize utils.WindowDimensions) {
+func (g GameState) Render() {
 	// Clear the screen
 	fmt.Print(utils.CSI + "2J")
 
 	// Render the border
-	renderBorder(winSize)
+	renderBorder()
 
 	// Render the snake
 	g.Snake.Render()
@@ -93,20 +98,20 @@ func (g GameState) Render(winSize utils.WindowDimensions) {
 	utils.SetPosition(fmt.Sprintf("Score: %d", g.Score), 1, 1)
 }
 
-func renderBorder(winSize utils.WindowDimensions) {
+func renderBorder() {
 	// Render the top border
-	topBorder := "┌" + strings.Repeat("─", winSize.Cols-2) + "┐"
+	topBorder := "┌" + strings.Repeat("─", windowSize.Cols-2) + "┐"
 	utils.SetPosition(topBorder, 1, 1)
 
 	// Render Side borders
-	for i := 0; i < winSize.Rows-2; i++ {
+	for i := 0; i < windowSize.Rows-2; i++ {
 		utils.SetPosition("│", 1, i+2)
-		utils.SetPosition("│", winSize.Cols, i+2)
+		utils.SetPosition("│", windowSize.Cols, i+2)
 	}
 
 	// Render the bottom border
-	bottomBorder := "└" + strings.Repeat("─", winSize.Cols-2) + "┘"
-	utils.SetPosition(bottomBorder, 1, winSize.Rows)
+	bottomBorder := "└" + strings.Repeat("─", windowSize.Cols-2) + "┘"
+	utils.SetPosition(bottomBorder, 1, windowSize.Rows)
 }
 
 func (g GameState) IsValidDirection(newDirection string) bool {

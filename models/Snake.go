@@ -8,7 +8,7 @@ type Snake struct {
 	body []utils.Position
 }
 
-func NewSnake(windowSize utils.WindowDimensions) *Snake {
+func NewSnake() *Snake {
 	head := utils.Position{X: windowSize.Cols / 2, Y: windowSize.Rows / 2}
 
 	// Add the new head to the snake
@@ -35,7 +35,6 @@ func (s *Snake) Move(direction string) {
 	}
 	// Add the new head to the snake
 	s.body = append([]utils.Position{snakeHead}, s.body[:len(s.body)-1]...)
-
 }
 
 func (s Snake) Render() {
@@ -47,6 +46,7 @@ func (s Snake) Render() {
 	}
 }
 
+/* Snake collision checks */
 func (s Snake) HitPoint(point utils.Position) bool {
 	head := s.body[0]
 	return head.X == point.X && head.Y == point.Y

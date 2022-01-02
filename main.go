@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -9,39 +10,49 @@ import (
 	"snake/utils"
 )
 
+var gameInterval time.Duration
+
 // Entry point of the game
 func main() {
+	// Initialize the game configuration
+	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
+	startCmd.DurationVar(&gameInterval, "speed", time.Millisecond*100, "The interval between frames")
+
+	if len(os.Args) < 2 {
+		utils.ExitGame("Please specify a command (start)")
+	}
+
 	switch os.Args[1] {
 	case "start":
+		startCmd.Parse(os.Args[2:])
 		startGame()
 	default:
 		panic("Unknown command")
 	}
-
 }
 
 func startGame() {
-	fmt.Println("Starting game")
+	fmt.Println("Speed:", gameInterval)
+	fmt.Println("Starting game...")
+	time.Sleep(time.Second)
+
 	// Remove the cursor
 	fmt.Print("\033[?25l")
-	// Get dimensions of the terminal window
-	windowSize := utils.GetWindowSize()
-	gameState := models.NewGame(windowSize)
 
-	key := make(chan string)
-	go utils.ListenForKeyPress(key)
-
+	// Create a new game
+	var gameState = models.NewGame()
+	var key = make(chan string)
 	var reason string
 	var gameOn = true
-
-	// Initialise the frame ticker
 	var nextFrame bool
-	var interval = time.Millisecond * 100
+
+	// Listen for key presses with a goroutine
+	go utils.ListenForKeyPress(key)
 
 	// The game loop
 	// While the game is not over:
 	for gameOn {
-		gameState.Render(windowSize)
+		gameState.Render()
 		nextFrame = false
 
 		// Get input while waiting for the next frame
@@ -52,12 +63,12 @@ func startGame() {
 				if gameState.IsValidDirection(newInput) {
 					gameState.NewDirection = newInput
 				}
-			case <-time.After(interval):
+			case <-time.After(gameInterval):
 				nextFrame = true
 			}
 		}
 
-		gameOn, reason = gameState.Update(windowSize)
+		gameOn, reason = gameState.Update()
 	}
 	utils.ExitGame(reason)
 }
